@@ -21,22 +21,47 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Exam timer functionality
- const timerElement = document.getElementById('examTimer');
+    // Exam timer functionality - COMPLETELY FIXED
+    const timerElement = document.getElementById('examTimer');
     if (timerElement) {
-        const timeLimit = parseInt(timerElement.dataset.time); // Seconds
-        let timeLeft = timeLimit;
+        const timeLimit = parseInt(timerElement.dataset.time); 
         
-        // Save timer state to sessionStorage
-        if (!sessionStorage.getItem('examTimeLeft')) {
-            sessionStorage.setItem('examTimeLeft', timeLeft);
+        // Get tab change count from sessionStorage or initialize to 0
+        let tabChangeCount = parseInt(sessionStorage.getItem('tabChangeCount')) || 0;
+        
+        // Check if this is the first time loading the exam page
+        const isFirstLoad = sessionStorage.getItem('examInitialized') !== 'true';
+        
+        if (isFirstLoad) {
+            // This is the first load, initialize everything fresh
+            sessionStorage.setItem('examTimeLeft', timeLimit);
             sessionStorage.setItem('examStartTime', Date.now());
-        } else {
+            sessionStorage.setItem('examInitialized', 'true');
+            sessionStorage.setItem('tabChangeCount', '0');
+        }
+        
+        // Check if we have a valid saved time
+        const savedTimeLeft = parseInt(sessionStorage.getItem('examTimeLeft'));
+        const savedStartTime = parseInt(sessionStorage.getItem('examStartTime'));
+        
+        let timeLeft;
+        
+        if (savedTimeLeft !== null && savedStartTime !== null && !isNaN(savedTimeLeft) && !isNaN(savedStartTime)) {
             // Calculate remaining time considering page reloads
-            const savedTimeLeft = parseInt(sessionStorage.getItem('examTimeLeft'));
-            const savedStartTime = parseInt(sessionStorage.getItem('examStartTime'));
             const elapsedSeconds = Math.floor((Date.now() - savedStartTime) / 1000);
             timeLeft = Math.max(0, savedTimeLeft - elapsedSeconds);
+            
+            // If the calculated time is significantly different from server time, reset
+            if (Math.abs(timeLeft - timeLimit) > 60 && !isFirstLoad) {
+                timeLeft = timeLimit;
+                sessionStorage.setItem('examTimeLeft', timeLeft);
+                sessionStorage.setItem('examStartTime', Date.now());
+            }
+        } else {
+            // Fallback: Start fresh with the server-allocated time
+            timeLeft = timeLimit;
+            sessionStorage.setItem('examTimeLeft', timeLeft);
+            sessionStorage.setItem('examStartTime', Date.now());
         }
         
         const timerInterval = setInterval(function() {
@@ -44,6 +69,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 clearInterval(timerInterval);
                 sessionStorage.removeItem('examTimeLeft');
                 sessionStorage.removeItem('examStartTime');
+                sessionStorage.removeItem('tabChangeCount');
+                sessionStorage.removeItem('examInitialized');
                 document.getElementById('examForm').submit();
                 return;
             }
@@ -53,11 +80,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             
-            // Update sessionStorage every 5 seconds
-            if (timeLeft % 5 === 0) {
-                sessionStorage.setItem('examTimeLeft', timeLeft);
-                sessionStorage.setItem('examStartTime', Date.now());
-            }
+            // Update sessionStorage every second for accuracy
+            sessionStorage.setItem('examTimeLeft', timeLeft);
+            sessionStorage.setItem('examStartTime', Date.now());
             
             // Add warning class when time is low
             if (timeLeft < 300) { // 5 minutes
@@ -71,9 +96,19 @@ document.addEventListener('DOMContentLoaded', function() {
     // Auto-save answers
     const optionInputs = document.querySelectorAll('input[name^="question_"]');
     optionInputs.forEach(input => {
+        // Load saved answers on page load
+        const questionId = input.name.split('_')[1];
+        const savedAnswer = sessionStorage.getItem(`answer_${questionId}`);
+        if (savedAnswer && savedAnswer === input.value) {
+            input.checked = true;
+        }
+        
         input.addEventListener('change', function() {
             const questionId = this.name.split('_')[1];
             const selectedOption = this.value;
+            
+            // Save answer to sessionStorage
+            sessionStorage.setItem(`answer_${questionId}`, selectedOption);
             
             // Send AJAX request to save the answer
             fetch('save_answer.php', {
@@ -95,14 +130,20 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Tab change detection
-    let tabChangeCount = 0;
+    // Tab change detection - FIXED to persist across page refreshes
+    let tabChangeCount = parseInt(sessionStorage.getItem('tabChangeCount')) || 0;
     let warningModal = document.getElementById('warningModal');
+    
+    // Update warning count display if modal exists and tab changes have occurred
+    if (warningModal && tabChangeCount > 0) {
+        document.getElementById('warningCount').textContent = tabChangeCount;
+    }
     
     document.addEventListener('visibilitychange', function() {
         if (document.hidden) {
             // User switched tabs
             tabChangeCount++;
+            sessionStorage.setItem('tabChangeCount', tabChangeCount.toString());
             
             if (tabChangeCount === 1) {
                 // First warning
@@ -112,6 +153,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } else if (tabChangeCount >= 3) {
                 // Auto-submit after 3 warnings
+                sessionStorage.removeItem('tabChangeCount');
+                sessionStorage.removeItem('examTimeLeft');
+                sessionStorage.removeItem('examStartTime');
+                sessionStorage.removeItem('examInitialized');
                 document.getElementById('examForm').submit();
             } else {
                 // Subsequent warnings
@@ -127,7 +172,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeWarningBtn = document.getElementById('closeWarning');
     if (closeWarningBtn) {
         closeWarningBtn.addEventListener('click', function() {
-            warningModal.style.display = 'none';
+            if (warningModal) {
+                warningModal.style.display = 'none';
+            }
         });
     }
     
@@ -148,10 +195,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-
-
     // Additional JavaScript for form validation and UI enhancements
-document.addEventListener('DOMContentLoaded', function() {
     // Prevent future dates in date of birth field
     const dobField = document.getElementById('dob');
     if (dobField) {
@@ -181,7 +225,6 @@ document.addEventListener('DOMContentLoaded', function() {
             link.classList.add('active');
         }
     });
-});
     
     function showPage(pageNum) {
         // Hide all pages
@@ -190,7 +233,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         // Show selected page
-        document.getElementById(`page-${pageNum}`).style.display = 'block';
+        const pageElement = document.getElementById(`page-${pageNum}`);
+        if (pageElement) {
+            pageElement.style.display = 'block';
+        }
         
         // Update active page button
         pageButtons.forEach(button => {

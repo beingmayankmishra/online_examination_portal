@@ -34,7 +34,7 @@ if (isset($_GET['success'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mind Power University - Online Examination Portal</title>
+    <title>Mind Power University Online Examination Portal</title>
     <style>
         body, html {
             margin: 0;

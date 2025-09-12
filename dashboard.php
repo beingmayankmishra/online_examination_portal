@@ -12,6 +12,9 @@ $totalQuestions = count($questions);
 $examTimeMinutes = $totalQuestions;
 $examTimeSeconds = $examTimeMinutes * 60;
 
+// RESET EXAM SESSION ON EACH LOGIN - Add this line
+// unset($_SESSION['exam_start_time']);
+
 // Initialize response records for this student
 $studentId = $_SESSION['student_id'];
 foreach ($questions as $question) {
@@ -29,6 +32,8 @@ if (!isset($_SESSION['exam_start_time'])) {
     $_SESSION['exam_start_time'] = time();
     $_SESSION['exam_duration'] = $examTimeSeconds;
 }
+
+
 
 $elapsedTime = time() - $_SESSION['exam_start_time'];
 $remainingTime = max(0, $_SESSION['exam_duration'] - $elapsedTime);
