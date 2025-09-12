@@ -25,6 +25,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['enrollment_number'] = $student['enrollment_number'];
         $_SESSION['student_name'] = $student['name'];
         
+        // Set flag to clear session storage on next page load
+        $_SESSION['clear_session_storage'] = true;
+        
         header('Location: dashboard.php');
         exit();
     } else {

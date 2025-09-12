@@ -18,6 +18,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Please select your date of birth');
                 return;
             }
+            
+            // Clear any previous exam data when logging in
+            Object.keys(sessionStorage).forEach(key => {
+                if (key.startsWith('examTimeLeft_') || key.startsWith('examStartTime_') || 
+                    key.startsWith('tabChangeCount_') || key.startsWith('examInitialized_') ||
+                    key.startsWith('answer_')) {
+                    sessionStorage.removeItem(key);
+                }
+            });
         });
     }
     
@@ -25,24 +34,57 @@ document.addEventListener('DOMContentLoaded', function() {
     const timerElement = document.getElementById('examTimer');
     if (timerElement) {
         const timeLimit = parseInt(timerElement.dataset.time); 
+        const studentId = document.body.dataset.studentId || 'unknown';
+        
+        // Create user-specific storage keys
+        const timeLeftKey = `examTimeLeft_${studentId}`;
+        const startTimeKey = `examStartTime_${studentId}`;
+        const tabCountKey = `tabChangeCount_${studentId}`;
+        const initializedKey = `examInitialized_${studentId}`;
+        const currentStudentKey = `currentStudentId`;
+        
+        // Check if a different student was previously using this browser
+        const previousStudentId = sessionStorage.getItem(currentStudentKey);
+        if (previousStudentId && previousStudentId !== studentId) {
+            // Clear all data from the previous student
+            Object.keys(sessionStorage).forEach(key => {
+                if (key.startsWith(`examTimeLeft_${previousStudentId}`) || 
+                    key.startsWith(`examStartTime_${previousStudentId}`) || 
+                    key.startsWith(`tabChangeCount_${previousStudentId}`) || 
+                    key.startsWith(`examInitialized_${previousStudentId}`) ||
+                    key.startsWith(`answer_${previousStudentId}_`)) {
+                    sessionStorage.removeItem(key);
+                }
+            });
+        }
+        
+        // Store the current student ID
+        sessionStorage.setItem(currentStudentKey, studentId);
         
         // Get tab change count from sessionStorage or initialize to 0
-        let tabChangeCount = parseInt(sessionStorage.getItem('tabChangeCount')) || 0;
+        let tabChangeCount = parseInt(sessionStorage.getItem(tabCountKey)) || 0;
         
-        // Check if this is the first time loading the exam page
-        const isFirstLoad = sessionStorage.getItem('examInitialized') !== 'true';
+        // Check if this is the first time loading the exam page for this student
+        const isFirstLoad = sessionStorage.getItem(initializedKey) !== 'true';
         
         if (isFirstLoad) {
-            // This is the first load, initialize everything fresh
-            sessionStorage.setItem('examTimeLeft', timeLimit);
-            sessionStorage.setItem('examStartTime', Date.now());
-            sessionStorage.setItem('examInitialized', 'true');
-            sessionStorage.setItem('tabChangeCount', '0');
+            // This is the first load for this student, initialize everything fresh
+            sessionStorage.setItem(timeLeftKey, timeLimit.toString());
+            sessionStorage.setItem(startTimeKey, Date.now().toString());
+            sessionStorage.setItem(initializedKey, 'true');
+            sessionStorage.setItem(tabCountKey, '0');
+            
+            // Clear any previous answers for this student
+            Object.keys(sessionStorage).forEach(key => {
+                if (key.startsWith(`answer_${studentId}_`)) {
+                    sessionStorage.removeItem(key);
+                }
+            });
         }
         
         // Check if we have a valid saved time
-        const savedTimeLeft = parseInt(sessionStorage.getItem('examTimeLeft'));
-        const savedStartTime = parseInt(sessionStorage.getItem('examStartTime'));
+        const savedTimeLeft = parseInt(sessionStorage.getItem(timeLeftKey));
+        const savedStartTime = parseInt(sessionStorage.getItem(startTimeKey));
         
         let timeLeft;
         
@@ -50,27 +92,29 @@ document.addEventListener('DOMContentLoaded', function() {
             // Calculate remaining time considering page reloads
             const elapsedSeconds = Math.floor((Date.now() - savedStartTime) / 1000);
             timeLeft = Math.max(0, savedTimeLeft - elapsedSeconds);
-            
-            // If the calculated time is significantly different from server time, reset
-            if (Math.abs(timeLeft - timeLimit) > 60 && !isFirstLoad) {
-                timeLeft = timeLimit;
-                sessionStorage.setItem('examTimeLeft', timeLeft);
-                sessionStorage.setItem('examStartTime', Date.now());
-            }
         } else {
             // Fallback: Start fresh with the server-allocated time
             timeLeft = timeLimit;
-            sessionStorage.setItem('examTimeLeft', timeLeft);
-            sessionStorage.setItem('examStartTime', Date.now());
+            sessionStorage.setItem(timeLeftKey, timeLeft.toString());
+            sessionStorage.setItem(startTimeKey, Date.now().toString());
         }
         
         const timerInterval = setInterval(function() {
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
-                sessionStorage.removeItem('examTimeLeft');
-                sessionStorage.removeItem('examStartTime');
-                sessionStorage.removeItem('tabChangeCount');
-                sessionStorage.removeItem('examInitialized');
+                sessionStorage.removeItem(timeLeftKey);
+                sessionStorage.removeItem(startTimeKey);
+                sessionStorage.removeItem(tabCountKey);
+                sessionStorage.removeItem(initializedKey);
+                sessionStorage.removeItem(currentStudentKey);
+                
+                // Clear all answers for this student
+                Object.keys(sessionStorage).forEach(key => {
+                    if (key.startsWith(`answer_${studentId}_`)) {
+                        sessionStorage.removeItem(key);
+                    }
+                });
+                
                 document.getElementById('examForm').submit();
                 return;
             }
@@ -81,11 +125,11 @@ document.addEventListener('DOMContentLoaded', function() {
             timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             
             // Update sessionStorage every second for accuracy
-            sessionStorage.setItem('examTimeLeft', timeLeft);
-            sessionStorage.setItem('examStartTime', Date.now());
+            sessionStorage.setItem(timeLeftKey, timeLeft.toString());
+            sessionStorage.setItem(startTimeKey, Date.now().toString());
             
             // Add warning class when time is low
-            if (timeLeft < 300) { // 5 minutes
+            if (timeLeft < 300) {
                 timerElement.classList.add('warning');
             }
             
@@ -93,12 +137,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 1000);
     }
     
-    // Auto-save answers
+    // Auto-save answers - FIXED to prevent cross-student data leakage
     const optionInputs = document.querySelectorAll('input[name^="question_"]');
+    const studentId = document.body.dataset.studentId || 'unknown';
+    
+    // FIRST: Clear any answers that don't belong to the current student
+    Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith('answer_') && !key.startsWith(`answer_${studentId}_`)) {
+            sessionStorage.removeItem(key);
+        }
+    });
+    
+    // SECOND: Now load answers only for current student
     optionInputs.forEach(input => {
-        // Load saved answers on page load
         const questionId = input.name.split('_')[1];
-        const savedAnswer = sessionStorage.getItem(`answer_${questionId}`);
+        const answerKey = `answer_${studentId}_${questionId}`;
+        const savedAnswer = sessionStorage.getItem(answerKey);
+        
+        // Only check the answer if it belongs to the current student
         if (savedAnswer && savedAnswer === input.value) {
             input.checked = true;
         }
@@ -106,11 +162,12 @@ document.addEventListener('DOMContentLoaded', function() {
         input.addEventListener('change', function() {
             const questionId = this.name.split('_')[1];
             const selectedOption = this.value;
+            const answerKey = `answer_${studentId}_${questionId}`;
             
-            // Save answer to sessionStorage
-            sessionStorage.setItem(`answer_${questionId}`, selectedOption);
+            // Save answer to sessionStorage with student-specific key
+            sessionStorage.setItem(answerKey, selectedOption);
             
-            // Send AJAX request to save the answer
+            // Send AJAX request to save the answer to server
             fetch('save_answer.php', {
                 method: 'POST',
                 headers: {
@@ -130,36 +187,41 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Tab change detection - FIXED to persist across page refreshes
-    let tabChangeCount = parseInt(sessionStorage.getItem('tabChangeCount')) || 0;
+    // Tab change detection
+    const studentIdForTab = document.body.dataset.studentId || 'unknown';
+    const tabCountKey = `tabChangeCount_${studentIdForTab}`;
+    let tabChangeCount = parseInt(sessionStorage.getItem(tabCountKey)) || 0;
     let warningModal = document.getElementById('warningModal');
     
-    // Update warning count display if modal exists and tab changes have occurred
     if (warningModal && tabChangeCount > 0) {
         document.getElementById('warningCount').textContent = tabChangeCount;
     }
     
     document.addEventListener('visibilitychange', function() {
         if (document.hidden) {
-            // User switched tabs
             tabChangeCount++;
-            sessionStorage.setItem('tabChangeCount', tabChangeCount.toString());
+            sessionStorage.setItem(tabCountKey, tabChangeCount.toString());
             
             if (tabChangeCount === 1) {
-                // First warning
                 if (warningModal) {
                     warningModal.style.display = 'flex';
                     document.getElementById('warningCount').textContent = tabChangeCount;
                 }
             } else if (tabChangeCount >= 3) {
-                // Auto-submit after 3 warnings
-                sessionStorage.removeItem('tabChangeCount');
-                sessionStorage.removeItem('examTimeLeft');
-                sessionStorage.removeItem('examStartTime');
-                sessionStorage.removeItem('examInitialized');
+                sessionStorage.removeItem(tabCountKey);
+                sessionStorage.removeItem(`examTimeLeft_${studentIdForTab}`);
+                sessionStorage.removeItem(`examStartTime_${studentIdForTab}`);
+                sessionStorage.removeItem(`examInitialized_${studentIdForTab}`);
+                sessionStorage.removeItem(`currentStudentId`);
+                
+                Object.keys(sessionStorage).forEach(key => {
+                    if (key.startsWith(`answer_${studentIdForTab}_`)) {
+                        sessionStorage.removeItem(key);
+                    }
+                });
+                
                 document.getElementById('examForm').submit();
             } else {
-                // Subsequent warnings
                 if (warningModal) {
                     warningModal.style.display = 'flex';
                     document.getElementById('warningCount').textContent = tabChangeCount;
@@ -183,10 +245,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const pageButtons = document.querySelectorAll('.page-btn');
     
     if (questionPages.length > 0) {
-        // Show first page initially
         showPage(1);
         
-        // Add click event to page buttons
         pageButtons.forEach(button => {
             button.addEventListener('click', function() {
                 const pageNum = parseInt(this.dataset.page);
@@ -196,7 +256,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Additional JavaScript for form validation and UI enhancements
-    // Prevent future dates in date of birth field
     const dobField = document.getElementById('dob');
     if (dobField) {
         const today = new Date();
@@ -204,7 +263,6 @@ document.addEventListener('DOMContentLoaded', function() {
         dobField.setAttribute('max', maxDate);
     }
     
-    // Auto-hide messages after 5 seconds
     const messages = document.querySelectorAll('.error-message, .success-message');
     messages.forEach(message => {
         setTimeout(() => {
@@ -216,7 +274,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 5000);
     });
     
-    // Admin navigation active state
     const currentPage = window.location.pathname.split('/').pop();
     const navLinks = document.querySelectorAll('.admin-nav a');
     navLinks.forEach(link => {
@@ -227,18 +284,15 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     function showPage(pageNum) {
-        // Hide all pages
         questionPages.forEach(page => {
             page.style.display = 'none';
         });
         
-        // Show selected page
         const pageElement = document.getElementById(`page-${pageNum}`);
         if (pageElement) {
             pageElement.style.display = 'block';
         }
         
-        // Update active page button
         pageButtons.forEach(button => {
             if (parseInt(button.dataset.page) === pageNum) {
                 button.classList.add('active');

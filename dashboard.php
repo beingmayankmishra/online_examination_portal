@@ -1,4 +1,26 @@
 <?php
+
+session_start();
+
+// Check if we need to clear sessionStorage from previous student
+if (isset($_SESSION['clear_session_storage']) && $_SESSION['clear_session_storage']) {
+    unset($_SESSION['clear_session_storage']);
+    echo '<script>
+        // Clear all exam-related sessionStorage data
+        Object.keys(sessionStorage).forEach(key => {
+            if (key.startsWith("examTimeLeft_") || 
+                key.startsWith("examStartTime_") || 
+                key.startsWith("tabChangeCount_") || 
+                key.startsWith("examInitialized_") ||
+                key.startsWith("answer_") ||
+                key === "currentStudentId") {
+                sessionStorage.removeItem(key);
+            }
+        });
+    </script>';
+}
+
+
 require_once 'includes/auth.php';
 require_once 'includes/db_connect.php';
 redirectIfNotLoggedIn('student');
@@ -46,7 +68,7 @@ $remainingTime = max(0, $_SESSION['exam_duration'] - $elapsedTime);
     <title>Exam Dashboard - Mind Power University</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
+<body data-student-id="<?php echo $_SESSION['student_id']; ?>">
     <div class="container">
         <div class="dashboard-header">
             <div class="student-info">

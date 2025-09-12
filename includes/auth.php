@@ -1,5 +1,8 @@
 <?php
-session_start();
+// includes/auth.php - Add this check to prevent multiple session starts
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 function isStudentLoggedIn() {
     return isset($_SESSION['student_id']) && !empty($_SESSION['student_id']);
