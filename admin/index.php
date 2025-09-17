@@ -3,10 +3,6 @@
 session_start();
 require_once '../includes/db_connect.php';
 
-// Default admin credentials
-$adminEmail = 'examination@mindpoweruniversity.ac.in';
-$adminPassword = 'examadmin@123';
-
 // Check if already logged in
 if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
     header('Location: dashboard.php');
@@ -14,16 +10,35 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
 }
 
 // Process login
+$error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = $_POST['email'];
-    $password = $_POST['password'];
+    $email = $_POST['email'] ?? '';
+    $password = $_POST['password'] ?? '';
     
-    if ($email === $adminEmail && $password === $adminPassword) {
-        $_SESSION['admin_logged_in'] = true;
-        header('Location: dashboard.php');
-        exit();
+    if (!empty($email) && !empty($password)) {
+        // Check credentials against database
+        $stmt = $pdo->prepare("SELECT * FROM admin_users WHERE email = ?");
+        $stmt->execute([$email]);
+        $admin = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($admin) {
+            // Check password using password_verify() only
+            if (password_verify($password, $admin['password_hash'])) {
+                // Login successful
+                $_SESSION['admin_logged_in'] = true;
+                $_SESSION['admin_id'] = $admin['id'];
+                $_SESSION['admin_email'] = $admin['email'];
+                
+                header('Location: dashboard.php');
+                exit();
+            } else {
+                $error = "Invalid credentials. Please try again.";
+            }
+        } else {
+            $error = "Invalid credentials. Please try again.";
+        }
     } else {
-        $error = "Invalid credentials";
+        $error = "Please enter both email and password.";
     }
 }
 ?>
@@ -33,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login - Mind Power University</title>
-    <style>
+     <style>
         body, html {
             margin: 0;
             padding: 0;
@@ -276,6 +291,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     </style>
+    
 </head>
 <body>
     <div class="login-page">
@@ -293,19 +309,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="login-form">
                         <h3>Admin Login</h3>
 
-                        <?php if (isset($error)): ?>
-                        <div class="error-message"><?php echo $error; ?></div>
+                        <?php if (!empty($error)): ?>
+                        <div class="error-message"><?php echo htmlspecialchars($error); ?></div>
                         <?php endif; ?>
 
                         <form method="POST">
                             <div class="form-group">
                                 <label for="email">Email</label>
-                                <input type="email" id="email" name="email" required>
+                                <input type="email" id="email" name="email" required autocomplete="off" value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>">
                             </div>
                             
                             <div class="form-group">
                                 <label for="password">Password</label>
-                                <input type="password" id="password" name="password" required>
+                                <input type="password" id="password" name="password" required autocomplete="off">
                             </div>
                             
                             <button type="submit" class="login-btn">Login</button>
