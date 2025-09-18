@@ -1,5 +1,5 @@
 <?php
-// Database configuration
+
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'mindpower_university_exam');
 define('DB_USER', 'root');

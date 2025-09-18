@@ -1,19 +1,19 @@
 <?php
-// logout.php - Remove session_start() from here since auth.php will handle it
-require_once 'includes/auth.php'; // Add this line
 
-// Clear all exam-related session data specifically
+require_once 'includes/auth.php'; 
+
+
 unset($_SESSION['exam_start_time']);
 unset($_SESSION['exam_duration']);
 unset($_SESSION['exam_initialized']);
 unset($_SESSION['clear_session_storage']);
 
-// Also clear any student-specific session data
+
 unset($_SESSION['student_id']);
 unset($_SESSION['enrollment_number']);
 unset($_SESSION['student_name']);
 
-// Unset all session variables
+
 $_SESSION = array();
 
 // If it's desired to kill the session, also delete the session cookie

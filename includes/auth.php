@@ -1,5 +1,5 @@
 <?php
-// includes/auth.php - Add this check to prevent multiple session starts
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }

@@ -1,5 +1,5 @@
 <?php
-// submit_exam.php
+
 require_once 'includes/auth.php';
 require_once 'includes/db_connect.php';
 

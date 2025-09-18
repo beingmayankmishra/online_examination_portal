@@ -1,5 +1,5 @@
 <?php
-// admin/index.php
+
 session_start();
 require_once '../includes/db_connect.php';
 
