@@ -35,6 +35,7 @@ if (isset($_GET['success'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mind Power University Online Examination Portal</title>
+    <link rel="icon" type="image/png"  href="css/images/MPU_favicon.jpg?v=2">
     <style>
         body, html {
             margin: 0;

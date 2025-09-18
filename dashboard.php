@@ -66,6 +66,7 @@ $remainingTime = max(0, $_SESSION['exam_duration'] - $elapsedTime);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exam Dashboard - Mind Power University</title>
+    <link rel="icon" type="image/png"  href="css/images/MPU_favicon.jpg?v=2">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body data-student-id="<?php echo $_SESSION['student_id']; ?>">

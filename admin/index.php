@@ -48,6 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login - Mind Power University</title>
+    <link rel="icon" type="image/png"  href="../css/images/MPU_favicon.jpg">
      <style>
         body, html {
             margin: 0;
