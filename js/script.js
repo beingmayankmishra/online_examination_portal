@@ -1,4 +1,4 @@
-// js/script.js
+// js/script.js - COMPLETE FIXED VERSION
 document.addEventListener('DOMContentLoaded', function() {
     // Login form validation
     const loginForm = document.getElementById('studentLoginForm');
@@ -29,6 +29,36 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+    
+    // Prevent future dates in date of birth field
+    const dobField = document.getElementById('dob');
+    if (dobField) {
+        const today = new Date();
+        const maxDate = today.toISOString().split('T')[0];
+        dobField.setAttribute('max', maxDate);
+    }
+    
+    // Auto-hide messages after 5 seconds
+    const messages = document.querySelectorAll('.error-message, .success-message');
+    messages.forEach(message => {
+        setTimeout(() => {
+            message.style.opacity = '0';
+            message.style.transition = 'opacity 0.5s ease-out';
+            setTimeout(() => {
+                message.remove();
+            }, 500);
+        }, 5000);
+    });
+    
+    // Admin navigation active state
+    const currentPage = window.location.pathname.split('/').pop();
+    const navLinks = document.querySelectorAll('.admin-nav a');
+    navLinks.forEach(link => {
+        const linkPage = link.getAttribute('href');
+        if (linkPage === currentPage || (currentPage === '' && linkPage === 'dashboard.php')) {
+            link.classList.add('active');
+        }
+    });
     
     // Exam timer functionality - COMPLETELY FIXED
     const timerElement = document.getElementById('examTimer');
@@ -135,6 +165,57 @@ document.addEventListener('DOMContentLoaded', function() {
             
             timeLeft--;
         }, 1000);
+        
+        // Tab change detection - FIXED (3 attempts allowed)
+        let warningModal = document.getElementById('warningModal');
+        
+        if (warningModal && tabChangeCount > 0) {
+            document.getElementById('warningCount').textContent = tabChangeCount;
+        }    
+        
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                tabChangeCount++;
+                sessionStorage.setItem(tabCountKey, tabChangeCount.toString());
+                
+                if (tabChangeCount === 1) {
+                    if (warningModal) {
+                        warningModal.style.display = 'flex';
+                        document.getElementById('warningCount').textContent = tabChangeCount;
+                    }
+                } else if (tabChangeCount >= 3) {
+                    clearInterval(timerInterval);
+                    sessionStorage.removeItem(tabCountKey);
+                    sessionStorage.removeItem(timeLeftKey);
+                    sessionStorage.removeItem(startTimeKey);
+                    sessionStorage.removeItem(initializedKey);
+                    sessionStorage.removeItem(currentStudentKey);
+                    
+                    Object.keys(sessionStorage).forEach(key => {
+                        if (key.startsWith(`answer_${studentId}_`)) {
+                            sessionStorage.removeItem(key);
+                        }
+                    });
+                    
+                    document.getElementById('examForm').submit();
+                } else {
+                    if (warningModal) {
+                        warningModal.style.display = 'flex';
+                        document.getElementById('warningCount').textContent = tabChangeCount;
+                    }
+                }
+            }
+        });
+        
+        // Close warning modal
+        const closeWarningBtn = document.getElementById('closeWarning');
+        if (closeWarningBtn) {
+            closeWarningBtn.addEventListener('click', function() {
+                if (warningModal) {
+                    warningModal.style.display = 'none';
+                }
+            });
+        }
     }
     
     // Auto-save answers - FIXED to prevent cross-student data leakage
@@ -187,59 +268,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Tab change detection
-    const studentIdForTab = document.body.dataset.studentId || 'unknown';
-    const tabCountKey = `tabChangeCount_${studentIdForTab}`;
-    let tabChangeCount = parseInt(sessionStorage.getItem(tabCountKey)) || 0;
-    let warningModal = document.getElementById('warningModal');
-    
-    if (warningModal && tabChangeCount > 0) {
-        document.getElementById('warningCount').textContent = tabChangeCount;
-    }
-    
-    document.addEventListener('visibilitychange', function() {
-        if (document.hidden) {
-            tabChangeCount++;
-            sessionStorage.setItem(tabCountKey, tabChangeCount.toString());
-            
-            if (tabChangeCount === 1) {
-                if (warningModal) {
-                    warningModal.style.display = 'flex';
-                    document.getElementById('warningCount').textContent = tabChangeCount;
-                }
-            } else if (tabChangeCount >= 3) {
-                sessionStorage.removeItem(tabCountKey);
-                sessionStorage.removeItem(`examTimeLeft_${studentIdForTab}`);
-                sessionStorage.removeItem(`examStartTime_${studentIdForTab}`);
-                sessionStorage.removeItem(`examInitialized_${studentIdForTab}`);
-                sessionStorage.removeItem(`currentStudentId`);
-                
-                Object.keys(sessionStorage).forEach(key => {
-                    if (key.startsWith(`answer_${studentIdForTab}_`)) {
-                        sessionStorage.removeItem(key);
-                    }
-                });
-                
-                document.getElementById('examForm').submit();
-            } else {
-                if (warningModal) {
-                    warningModal.style.display = 'flex';
-                    document.getElementById('warningCount').textContent = tabChangeCount;
-                }
-            }
-        }
-    });
-    
-    // Close warning modal
-    const closeWarningBtn = document.getElementById('closeWarning');
-    if (closeWarningBtn) {
-        closeWarningBtn.addEventListener('click', function() {
-            if (warningModal) {
-                warningModal.style.display = 'none';
-            }
-        });
-    }
-    
     // Pagination
     const questionPages = document.querySelectorAll('.question-page');
     const pageButtons = document.querySelectorAll('.page-btn');
@@ -253,52 +281,122 @@ document.addEventListener('DOMContentLoaded', function() {
                 showPage(pageNum);
             });
         });
-    }
-
-    // Additional JavaScript for form validation and UI enhancements
-    const dobField = document.getElementById('dob');
-    if (dobField) {
-        const today = new Date();
-        const maxDate = today.toISOString().split('T')[0];
-        dobField.setAttribute('max', maxDate);
-    }
-    
-    const messages = document.querySelectorAll('.error-message, .success-message');
-    messages.forEach(message => {
-        setTimeout(() => {
-            message.style.opacity = '0';
-            message.style.transition = 'opacity 0.5s ease-out';
-            setTimeout(() => {
-                message.remove();
-            }, 500);
-        }, 5000);
-    });
-    
-    const currentPage = window.location.pathname.split('/').pop();
-    const navLinks = document.querySelectorAll('.admin-nav a');
-    navLinks.forEach(link => {
-        const linkPage = link.getAttribute('href');
-        if (linkPage === currentPage || (currentPage === '' && linkPage === 'dashboard.php')) {
-            link.classList.add('active');
-        }
-    });
-    
-    function showPage(pageNum) {
-        questionPages.forEach(page => {
-            page.style.display = 'none';
-        });
         
-        const pageElement = document.getElementById(`page-${pageNum}`);
-        if (pageElement) {
-            pageElement.style.display = 'block';
-        }
-        
-        pageButtons.forEach(button => {
-            if (parseInt(button.dataset.page) === pageNum) {
-                button.classList.add('active');
-            } else {
-                button.classList.remove('active');
+        function showPage(pageNum) {
+            // Hide all pages
+            questionPages.forEach(page => {
+                page.style.display = 'none';
+            });
+            
+            // Show selected page
+            const currentPage = document.getElementById(`page-${pageNum}`);
+            if (currentPage) {
+                currentPage.style.display = 'block';
             }
-        });
+            
+            // Update active page button
+            pageButtons.forEach(button => {
+                if (parseInt(button.dataset.page) === pageNum) {
+                    button.classList.add('active');
+                } else {
+                    button.classList.remove('active');
+                }
+            });
+        }
+    }
+});
+
+// Secure Exam Browser Functions - ADD THIS TO YOUR DASHBOARD.PHP
+function enableSecureExamMode() {
+    console.log('Enabling secure exam mode...');
+    
+    // Enable fullscreen
+    enterKioskMode();
+    
+    // Disable right-click
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    });
+    
+    // Disable developer tools
+    disableDevTools();
+    
+    // Prevent leaving page
+    setupExitPrevention();
+    
+    // Add kiosk mode class to body
+    document.body.classList.add('kiosk-mode');
+}
+
+function enterKioskMode() {
+    if (sessionStorage.getItem('kioskModeAgreed') === 'true') {
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen()
+                .then(() => {
+                    console.log('Fullscreen mode enabled successfully');
+                })
+                .catch(err => {
+                    console.log('Fullscreen error:', err);
+                });
+        }
+    }
+}
+
+function disableDevTools() {
+    // Disable F12, Ctrl+Shift+I, Ctrl+U, etc.
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'F12' || 
+            (e.ctrlKey && e.shiftKey && e.key === 'I') ||
+            (e.ctrlKey && e.shiftKey && e.key === 'C') ||
+            (e.ctrlKey && e.key === 'U') ||
+            (e.ctrlKey && e.key === 'R') ||
+            (e.ctrlKey && e.key === 'F5')) {
+            e.preventDefault();
+        }
+        
+        // Alt+Tab, Alt+F4, Windows key detection
+        if (e.altKey || e.key === 'Tab' || (e.altKey && e.key === 'F4')) {
+            e.preventDefault();
+        }
+    });
+}
+
+function setupExitPrevention() {
+    // Prevent back/forward navigation
+    history.pushState(null, null, document.URL);
+    window.addEventListener('popstate', function() {
+        history.pushState(null, null, document.URL);
+    });
+    
+    // Detect window resize (attempt to exit fullscreen)
+    window.addEventListener('resize', function() {
+        if (!document.fullscreenElement) {
+            // Show warning but don't auto-submit immediately
+            const warningModal = document.getElementById('warningModal');
+            if (warningModal) {
+                warningModal.style.display = 'flex';
+            }
+        }
+    });
+}
+
+function showViolationWarning(message) {
+    console.log('Security violation:', message);
+    const warningModal = document.getElementById('warningModal');
+    if (warningModal) {
+        warningModal.style.display = 'flex';
+    }
+}
+
+function forceSubmit() {
+    console.log('Force submitting exam due to security violation');
+    sessionStorage.clear();
+    document.getElementById('examForm').submit();
+}
+
+// Fullscreen change detection
+document.addEventListener('fullscreenchange', function() {
+    if (!document.fullscreenElement) {
+        showViolationWarning('Fullscreen mode exited');
     }
 });

@@ -8,6 +8,7 @@ function isStudentLoggedIn() {
     return isset($_SESSION['student_id']) && !empty($_SESSION['student_id']);
 }
 
+
 function isAdminLoggedIn() {
     return isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true;
 }

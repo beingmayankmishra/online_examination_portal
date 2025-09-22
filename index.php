@@ -17,6 +17,9 @@ if (isset($_GET['error'])) {
         case 'already_submitted':
             $error = 'You have already submitted the exam.';
             break;
+        case 'timeout':
+            $error = 'Exam session expired. Please contact administrator.';
+            break;
         default:
             $error = 'An error occurred. Please try again.';
     }

@@ -819,6 +819,38 @@ footer {
     color: #1565c0;
 }
 
+/* Fullscreen mode styles */
+:-webkit-full-screen {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+:-moz-full-screen {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+:-ms-fullscreen {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+:fullscreen {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Kiosk mode optimizations */
+body.kiosk-mode {
+    overflow: hidden;
+}
+
+.kiosk-mode .container {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 20px !important;
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
     .container, .admin-container {

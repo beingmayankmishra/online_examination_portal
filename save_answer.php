@@ -9,7 +9,7 @@ if (!isStudentLoggedIn()) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $questionId = $_POST['question_id'] ?? '';
-    $selectedOption = $_POST['selected_option'] ?? '';
+    $selectedOption = $_POST['selected_option'] ?? ''; 
     $studentId = $_SESSION['student_id'];
     
     if (empty($questionId)) {
