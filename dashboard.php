@@ -77,6 +77,7 @@ $_SESSION['enable_fullscreen'] = true;
     <title>Exam Dashboard - Mind Power University</title>
     <link rel="icon" type="image/png"  href="css/images/MPU_favicon.jpg?v=2">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* Security warning banner */
         .security-banner {
@@ -211,9 +212,240 @@ $_SESSION['enable_fullscreen'] = true;
             -ms-user-select: none;
             user-select: none;
         }
+        
+        /* Summary page styles */
+        .summary-container {
+            display: none;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .summary-title {
+            color: #311b92;
+            margin-bottom: 25px;
+            font-size: 24px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+        }
+        
+        .summary-stats {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-box {
+            flex: 1;
+            min-width: 150px;
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .total-questions {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+        }
+        
+        .attempted {
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        }
+        
+        .not-attempted {
+            background: linear-gradient(135deg, #F44336 0%, #D32F2F 100%);
+        }
+        
+        .stat-number {
+            font-size: 32px;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 16px;
+        }
+        
+        .summary-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .back-to-exam {
+            background: #FF9800;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .confirm-submit {
+            background: #F44336;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .back-to-exam:hover, .confirm-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .question-status-container {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 10px;
+        }
+        
+        .question-status-title {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #311b92;
+            font-weight: bold;
+        }
+        
+        .question-status-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .question-status-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+            border: 2px solid #ddd;
+            background: white;
+            transition: all 0.2s;
+        }
+        
+        .question-status-btn.attempted {
+            border-color: #4CAF50;
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+        
+        .question-status-btn.current {
+            border-color: #2196F3;
+            background: #E3F2FD;
+            color: #1976D2;
+            transform: scale(1.1);
+        }
+        
+        .question-status-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        /* Warning modal */
+        .warning-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 999999;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+        
+        .modal-content h3 {
+            color: #D32F2F;
+            margin-top: 0;
+        }
+        
+        .modal-buttons {
+            margin-top: 20px;
+        }
+        
+        .modal-buttons button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            gap: 10px;
+        }
+        
+        .page-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .page-btn.active {
+            border-color: #2196F3;
+            background: #E3F2FD;
+            color: #1976D2;
+        }
+        
+        .page-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        /* Submit button */
+        .submit-btn {
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 20px auto;
+            display: block;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
     </style>
 </head>
-<body data-student-id="<?php echo $_SESSION['student_id']; ?>">
+<body data-student-id="<?php echo $_SESSION['student_id']; ?>" data-total-questions="<?php echo $totalQuestions; ?>">
     <!-- Fullscreen Permission Prompt -->
     <div class="fullscreen-permission-prompt" id="fullscreenPrompt">
         <div class="fullscreen-permission-content">
@@ -243,6 +475,7 @@ $_SESSION['enable_fullscreen'] = true;
             </div>
         </div>
         
+        <!-- Exam Form -->
         <form id="examForm" action="submit_exam.php" method="POST">
             <?php
             // Split questions into pages (10 questions per page)
@@ -258,28 +491,34 @@ $_SESSION['enable_fullscreen'] = true;
                     $question = $questions[$i];
                     $questionNum = $i + 1;
                 ?>
-                <div class="question-container">
+                <div class="question-container" data-question-id="<?php echo $question['id']; ?>" data-question-number="<?php echo $questionNum; ?>">
                     <div class="question-text"><?php echo $questionNum . '. ' . htmlspecialchars($question['question_text']); ?></div>
                     <div class="options-container">
                         <label class="option-label">
-                            <input type="radio" name="question_<?php echo $question['id']; ?>" value="A">
+                            <input type="radio" name="question_<?php echo $question['id']; ?>" value="A" data-question-id="<?php echo $question['id']; ?>">
                             <?php echo htmlspecialchars($question['option_a']); ?>
                         </label>
                         <label class="option-label">
-                            <input type="radio" name="question_<?php echo $question['id']; ?>" value="B">
+                            <input type="radio" name="question_<?php echo $question['id']; ?>" value="B" data-question-id="<?php echo $question['id']; ?>">
                             <?php echo htmlspecialchars($question['option_b']); ?>
                         </label>
                         <label class="option-label">
-                            <input type="radio" name="question_<?php echo $question['id']; ?>" value="C">
+                            <input type="radio" name="question_<?php echo $question['id']; ?>" value="C" data-question-id="<?php echo $question['id']; ?>">
                             <?php echo htmlspecialchars($question['option_c']); ?>
                         </label>
                         <label class="option-label">
-                            <input type="radio" name="question_<?php echo $question['id']; ?>" value="D">
+                            <input type="radio" name="question_<?php echo $question['id']; ?>" value="D" data-question-id="<?php echo $question['id']; ?>">
                             <?php echo htmlspecialchars($question['option_d']); ?>
                         </label>
                     </div>
                 </div>
                 <?php endfor; ?>
+                
+                <?php if ($page == $totalPages): ?>
+                <div class="btn-container">
+                    <button type="button" class="submit-btn" id="reviewExamBtn">Review Exam</button>
+                </div>
+                <?php endif; ?>
             </div>
             <?php endfor; ?>
             
@@ -292,9 +531,45 @@ $_SESSION['enable_fullscreen'] = true;
                 <?php endfor; ?>
             </div>
             <?php endif; ?>
-            
-            <button type="submit" class="submit-btn">Submit Exam</button>
         </form>
+        
+        <!-- Summary Page -->
+        <div class="summary-container" id="summaryPage">
+            <h2 class="summary-title">Exam Summary</h2>
+            
+            <div class="summary-stats">
+                <div class="stat-box total-questions">
+                    <div class="stat-number" id="totalQuestions">0</div>
+                    <div class="stat-label">Total Questions</div>
+                </div>
+                
+                <div class="stat-box attempted">
+                    <div class="stat-number" id="attemptedQuestions">0</div>
+                    <div class="stat-label">Attempted</div>
+                </div>
+                
+                <div class="stat-box not-attempted">
+                    <div class="stat-number" id="notAttemptedQuestions">0</div>
+                    <div class="stat-label">Not Attempted</div>
+                </div>
+            </div>
+            
+            <div class="question-status-container">
+                <div class="question-status-title">Question Status</div>
+                <div class="question-status-buttons" id="questionStatusButtons">
+                    <!-- Question status buttons will be generated here by JavaScript -->
+                </div>
+            </div>
+            
+            <div class="summary-actions">
+                <button type="button" class="back-to-exam" id="backToExamBtn">
+                    <i class="fas fa-arrow-left"></i> Back to Exam
+                </button>
+                <button type="button" class="confirm-submit" id="confirmSubmitBtn">
+                    <i class="fas fa-paper-plane"></i> Confirm Submission
+                </button>
+            </div>
+        </div>
         
         <div class="warning-modal" id="warningModal">
             <div class="modal-content">
@@ -308,7 +583,6 @@ $_SESSION['enable_fullscreen'] = true;
         </div>
     </div>
 
-    <!-- <script src="js/script.js"></script> -->
     <script>
     // Enhanced Secure Exam Browser Functions
     document.addEventListener('DOMContentLoaded', function() {
@@ -321,6 +595,17 @@ $_SESSION['enable_fullscreen'] = true;
         document.getElementById('enableFullscreen').addEventListener('click', function() {
             enableLockdownMode();
         });
+        
+        // Setup event listeners for new buttons
+        document.getElementById('reviewExamBtn').addEventListener('click', showSummaryPage);
+        document.getElementById('backToExamBtn').addEventListener('click', hideSummaryPage);
+        document.getElementById('confirmSubmitBtn').addEventListener('click', submitExam);
+        
+        // Initialize question status tracking
+        initializeQuestionStatus();
+        
+        // Setup pagination
+        setupPagination();
     });
 
     // Global variables
@@ -329,6 +614,198 @@ $_SESSION['enable_fullscreen'] = true;
     let tabChangeCount = 0;
     let isExamStarted = false;
     let isSubmitting = false;
+    let currentPage = 1;
+    const totalQuestions = <?php echo $totalQuestions; ?>;
+    const totalPages = Math.ceil(totalQuestions / 10);
+    let answeredQuestions = new Set();
+
+    function setupPagination() {
+        document.querySelectorAll('.page-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const pageNum = parseInt(this.dataset.page);
+                showPage(pageNum);
+            });
+        });
+    }
+
+    function initializeQuestionStatus() {
+        // Load any previously answered questions from sessionStorage
+        const savedAnswers = sessionStorage.getItem('answeredQuestions');
+        if (savedAnswers) {
+            answeredQuestions = new Set(JSON.parse(savedAnswers));
+        }
+        
+        // Set up change listeners for all radio buttons
+        document.querySelectorAll('input[type="radio"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const questionId = this.getAttribute('data-question-id');
+                answeredQuestions.add(questionId);
+                
+                // Save to sessionStorage
+                sessionStorage.setItem('answeredQuestions', JSON.stringify(Array.from(answeredQuestions)));
+                
+                // Update the question status display if we're on the summary page
+                if (document.getElementById('summaryPage').style.display === 'block') {
+                    updateQuestionStatusButtons();
+                    updateSummaryStats();
+                }
+            });
+        });
+        
+        // Check initially which questions are answered
+        document.querySelectorAll('input[type="radio"]:checked').forEach(radio => {
+            const questionId = radio.getAttribute('data-question-id');
+            answeredQuestions.add(questionId);
+        });
+        
+        // Save to sessionStorage
+        sessionStorage.setItem('answeredQuestions', JSON.stringify(Array.from(answeredQuestions)));
+        
+        // Generate question status buttons
+        generateQuestionStatusButtons();
+    }
+
+    function generateQuestionStatusButtons() {
+        const container = document.getElementById('questionStatusButtons');
+        container.innerHTML = '';
+        
+        for (let i = 1; i <= totalQuestions; i++) {
+            const btn = document.createElement('div');
+            btn.className = 'question-status-btn';
+            btn.textContent = i;
+            btn.setAttribute('data-question', i);
+            
+            // Check if this question is answered
+            const questionId = getQuestionIdByNumber(i);
+            if (answeredQuestions.has(questionId)) {
+                btn.classList.add('attempted');
+            }
+            
+            // Add click event to navigate to the question
+            btn.addEventListener('click', function() {
+                goToQuestion(i);
+            });
+            
+            container.appendChild(btn);
+        }
+    }
+
+    function updateQuestionStatusButtons() {
+        document.querySelectorAll('.question-status-btn').forEach(btn => {
+            const questionNum = parseInt(btn.getAttribute('data-question'));
+            const questionId = getQuestionIdByNumber(questionNum);
+            
+            // Update classes based on answered status
+            if (answeredQuestions.has(questionId)) {
+                btn.classList.add('attempted');
+            } else {
+                btn.classList.remove('attempted');
+            }
+        });
+    }
+
+    function getQuestionIdByNumber(questionNumber) {
+        // Find the question element by its number
+        const questionElements = document.querySelectorAll('.question-container');
+        for (let i = 0; i < questionElements.length; i++) {
+            const qNum = parseInt(questionElements[i].getAttribute('data-question-number'));
+            if (qNum === questionNumber) {
+                return questionElements[i].getAttribute('data-question-id');
+            }
+        }
+        return questionNumber.toString(); // Fallback
+    }
+
+    function goToQuestion(questionNumber) {
+        // Calculate which page this question is on
+        const targetPage = Math.ceil(questionNumber / 10);
+        
+        // Show that page
+        showPage(targetPage);
+        
+        // Hide summary page
+        hideSummaryPage();
+        
+        // Scroll to the question
+        const questionElements = document.querySelectorAll('.question-container');
+        if (questionNumber <= questionElements.length) {
+            questionElements[questionNumber - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
+        // Highlight the current question in the summary
+        document.querySelectorAll('.question-status-btn').forEach(btn => {
+            btn.classList.remove('current');
+        });
+        const statusBtn = document.querySelector(`.question-status-btn[data-question="${questionNumber}"]`);
+        if (statusBtn) {
+            statusBtn.classList.add('current');
+        }
+    }
+
+    function showSummaryPage() {
+        // Hide all question pages
+        document.querySelectorAll('.question-page').forEach(page => {
+            page.style.display = 'none';
+        });
+        
+        // Hide pagination
+        if (document.querySelector('.pagination')) {
+            document.querySelector('.pagination').style.display = 'none';
+        }
+        
+        // Show summary page
+        document.getElementById('summaryPage').style.display = 'block';
+        
+        // Update summary stats
+        updateSummaryStats();
+        
+        // Update question status buttons
+        updateQuestionStatusButtons();
+    }
+
+    function hideSummaryPage() {
+        // Hide summary page
+        document.getElementById('summaryPage').style.display = 'none';
+        
+        // Show pagination
+        if (document.querySelector('.pagination')) {
+            document.querySelector('.pagination').style.display = 'flex';
+        }
+        
+        // Show the current page
+        showPage(currentPage);
+    }
+
+    function updateSummaryStats() {
+        document.getElementById('totalQuestions').textContent = totalQuestions;
+        document.getElementById('attemptedQuestions').textContent = answeredQuestions.size;
+        document.getElementById('notAttemptedQuestions').textContent = totalQuestions - answeredQuestions.size;
+    }
+
+    function showPage(pageNum) {
+        // Hide all pages
+        document.querySelectorAll('.question-page').forEach(page => {
+            page.style.display = 'none';
+        });
+        
+        // Show selected page
+        const currentPageElement = document.getElementById(`page-${pageNum}`);
+        if (currentPageElement) {
+            currentPageElement.style.display = 'block';
+        }
+        
+        // Update active page button
+        document.querySelectorAll('.page-btn').forEach(button => {
+            if (parseInt(button.dataset.page) === pageNum) {
+                button.classList.add('active');
+            } else {
+                button.classList.remove('active');
+            }
+        });
+        
+        // Update current page
+        currentPage = pageNum;
+    }
 
     function enableLockdownMode() {
         console.log('Enabling complete lockdown mode...');
@@ -589,7 +1066,7 @@ $_SESSION['enable_fullscreen'] = true;
     }
     
     function submitExam() {
-        if (isSubmitting) return; // Prevent multiple submissions
+        if (isSubmitting) return; 
         
         isSubmitting = true;
         console.log('Submitting exam normally');
@@ -614,7 +1091,7 @@ $_SESSION['enable_fullscreen'] = true;
         document.getElementById('examForm').submit();
     }
     
-    // Fullscreen change detection
+        // Fullscreen change detection
     const fullscreenEvents = [
         'fullscreenchange', 
         'webkitfullscreenchange', 

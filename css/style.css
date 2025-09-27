@@ -26,9 +26,9 @@ header {
     text-align: center;
     margin-bottom: 30px;
     padding: 25px;
-    background: linear-gradient(135deg, #1a237e, #311b92);
+    /* background: linear-gradient(135deg, #1a237e, #311b92); */
     color: white;
-    border-radius: 12px;
+    /* border-radius: 12px; */
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
     position: relative;
 }

@@ -25,9 +25,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $_SESSION['student_name'] = $student['name'];
     
     // Redirect to instructions instead of directly to exam
-    header('Location: instructions.php');
-    exit();
+        header('Location: instructions.php');
+        exit();
+    } else {
+        // Invalid credentials - redirect back to login with error
+        header('Location: index.php?error=invalid_credentials');
+        exit();
+    }
 }
- 
-}
+
+// If not POST request or any other issue, redirect to login
+header('Location: index.php');
+exit();
 ?>
